@@ -68,42 +68,134 @@ Students(stud_id, stud_name,stud_addr,stud_marks)
 --------------------
 ->
 
-db.createCollection("Students");
 
-db.Students.insertMany([
-  { stud_id: 101, stud_name: "Alice", stud_addr: "Pune", stud_marks: 85 },
-  { stud_id: 102, stud_name: "Bob", stud_addr: "Mumbai", stud_marks: 92 },
-  { stud_id: 103, stud_name: "Charlie", stud_addr: "Delhi", stud_marks: 78 },
-  { stud_id: 104, stud_name: "David", stud_addr: "Pune", stud_marks: 88 },
-  { stud_id: 105, stud_name: "Eva", stud_addr: "Mumbai", stud_marks: 95 },
-  { stud_id: 106, stud_name: "Fiona", stud_addr: "Delhi", stud_marks: 83 }
+use newStudentDB;
+
+db.createCollection("newStudents");
+
+
+db.newStudents.insertMany([
+  {
+    stud_id: 1,
+    stud_name: 'Shweta',
+    stud_addr: 'Pune',
+    stud_marks: {
+      subject1: 95,
+      subject2: 85,
+      subject3: 88,
+      subject4: 90
+    }
+  },
+  {
+    stud_id: 2,
+    stud_name: 'Aryan',
+    stud_addr: 'Mumbai',
+    stud_marks: {
+      subject1: 88,
+      subject2: 85,
+      subject3: 88,
+      subject4: 90
+    }
+  },
+  {
+    stud_id: 3,
+    stud_name: 'Priya',
+    stud_addr: 'Delhi',
+    stud_marks: {
+      subject1: 76,
+      subject2: 85,
+      subject3: 88,
+      subject4: 90
+    }
+  },
+{
+  stud_id: 4,
+  stud_name: 'Rahi',
+  stud_addr: 'Pune',
+  stud_marks: {
+    subject1: 82,
+    subject2: 85,
+    subject3: 88,
+    subject4: 90
+  }
+},
+{
+  stud_id: 5,
+  stud_name: 'Neha',
+  stud_addr: 'Chennai',
+  stud_marks: {
+    subject1: 91,
+    subject2: 85,
+    subject3: 88,
+    subject4: 90
+  }
+}
 ]);
+db.newStudents.find().pretty();
+[
+  {
+    _id: ObjectId('680297a0bd6f5858bbb71236'),
+    stud_id: 1,
+    stud_name: 'Shweta',
+    stud_addr: 'Pune',
+    stud_marks: { subject1: 95, subject2: 85, subject3: 88, subject4: 90 }
+  },
+  {
+    _id: ObjectId('680297a0bd6f5858bbb71237'),
+    stud_id: 2,
+    stud_name: 'Aryan',
+    stud_addr: 'Mumbai',
+    stud_marks: { subject1: 88, subject2: 85, subject3: 88, subject4: 90 }
+  },
+  {
+    _id: ObjectId('680297a0bd6f5858bbb71238'),
+    stud_id: 3,
+    stud_name: 'Priya',
+    stud_addr: 'Delhi',
+    stud_marks: { subject1: 76, subject2: 85, subject3: 88, subject4: 90 }
+  },
+  {
+    _id: ObjectId('680297a0bd6f5858bbb71239'),
+    stud_id: 4,
+    stud_name: 'Rahi',
+    stud_addr: 'Pune',
+    stud_marks: { subject1: 82, subject2: 85, subject3: 88, subject4: 90 }
+  },
+  {
+    _id: ObjectId('680297a0bd6f5858bbb7123a'),
+    stud_id: 5,
+    stud_name: 'Neha',
+    stud_addr: 'Chennai',
+    stud_marks: { subject1: 91, subject2: 85, subject3: 88, subject4: 90 }
+  }
+]
 var mapFunction = function() {
-  emit(this.stud_addr, { total: this.stud_marks, count: 1 });
+    var marks = this.stud_marks || {};
+    var s1 = marks.subject1 || 0;
+    var s2 = marks.subject2 || 0;
+    var s3 = marks.subject3 || 0;
+    var s4 = marks.subject4 || 0;
+
+    var total = s1 + s2 + s3 + s4;
+    var percentage = total / 4;
+
+    emit(this._id, {
+        name: this.stud_name,
+        total: total,
+        percentage: percentage
+    });
 };
 var reduceFunction = function(key, values) {
-  var result = { total: 0, count: 0 };
-
-  values.forEach(function(value) {
-    result.total += value.total;
-    result.count += value.count;
-  });
-
-  return result;
+    return values[0];
 };
-var finalizeFunction = function(key, reducedValue) {
-  reducedValue.avg = reducedValue.total / reducedValue.count;
-  return reducedValue;
-};
-db.Students.mapReduce(
-  mapFunction,
-  reduceFunction,
-  {
-    out: "AverageMarksByCity",
-    finalize: finalizeFunction
-  }
+db.newStudents.mapReduce(
+    mapFunction,
+    reduceFunction,
+    {
+        out: "student_results"
+    }
 );
-db.AverageMarksByCity.find().pretty();
+db.student_results.find().pretty();
 
 ================================================================================
 
