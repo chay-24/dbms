@@ -131,44 +131,9 @@ db.newStudents.insertMany([
   }
 }
 ]);
+
 db.newStudents.find().pretty();
-[
-  {
-    _id: ObjectId('680297a0bd6f5858bbb71236'),
-    stud_id: 1,
-    stud_name: 'Shweta',
-    stud_addr: 'Pune',
-    stud_marks: { subject1: 95, subject2: 85, subject3: 88, subject4: 90 }
-  },
-  {
-    _id: ObjectId('680297a0bd6f5858bbb71237'),
-    stud_id: 2,
-    stud_name: 'Aryan',
-    stud_addr: 'Mumbai',
-    stud_marks: { subject1: 88, subject2: 85, subject3: 88, subject4: 90 }
-  },
-  {
-    _id: ObjectId('680297a0bd6f5858bbb71238'),
-    stud_id: 3,
-    stud_name: 'Priya',
-    stud_addr: 'Delhi',
-    stud_marks: { subject1: 76, subject2: 85, subject3: 88, subject4: 90 }
-  },
-  {
-    _id: ObjectId('680297a0bd6f5858bbb71239'),
-    stud_id: 4,
-    stud_name: 'Rahi',
-    stud_addr: 'Pune',
-    stud_marks: { subject1: 82, subject2: 85, subject3: 88, subject4: 90 }
-  },
-  {
-    _id: ObjectId('680297a0bd6f5858bbb7123a'),
-    stud_id: 5,
-    stud_name: 'Neha',
-    stud_addr: 'Chennai',
-    stud_marks: { subject1: 91, subject2: 85, subject3: 88, subject4: 90 }
-  }
-]
+
 var mapFunction = function() {
     var marks = this.stud_marks || {};
     var s1 = marks.subject1 || 0;
