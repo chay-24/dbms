@@ -1,0 +1,407 @@
+Q5) Create a collection sites(url,dateofaccess). Write a MapReduce function to find the no. of times a site was accessed in a month
+PRACTICAL5
+----------------------
+->
+
+db.createCollection("sites");
+
+db.sites.insertMany([
+  { url: "example.com", dateofaccess: new Date("2023-10-05") },
+  { url: "example.com", dateofaccess: new Date("2023-10-15") },
+  { url: "example.com", dateofaccess: new Date("2023-11-01") },
+  { url: "test.com", dateofaccess: new Date("2023-10-20") },
+  { url: "test.com", dateofaccess: new Date("2023-11-05") }
+]);
+var mapFunction = function() {
+  var date = new Date(this.dateofaccess);
+  var month = date.getMonth() + 1; // JavaScript months are 0-based
+  var year = date.getFullYear();
+
+  emit(
+    { url: this.url, month: month, year: year },
+    1
+  );
+};
+var reduceFunction = function(key, values) {
+  return Array.sum(values);
+};
+db.sites.mapReduce(
+  mapFunction,
+  reduceFunction,
+  {
+    out: "monthly_access_stats"
+  }
+);
+db.monthly_access_stats.find().pretty();
+
+================================================================================
+
+Q 12) Implement Indexing and querying with MongoDB using following example.
+Students(stud_id, stud_name,stud_addr,stud_marks)
+---------------------
+->
+
+db.createCollection("Students");
+
+db.Students.insertMany([
+  { stud_id: 101, stud_name: "Alice", stud_addr: "Pune", stud_marks: 85 },
+  { stud_id: 102, stud_name: "Bob", stud_addr: "Mumbai", stud_marks: 92 },
+  { stud_id: 103, stud_name: "Charlie", stud_addr: "Delhi", stud_marks: 78 },
+  { stud_id: 104, stud_name: "David", stud_addr: "Pune", stud_marks: 88 },
+  { stud_id: 105, stud_name: "Eva", stud_addr: "Mumbai", stud_marks: 95 }
+]);
+db.Students.createIndex({ stud_id: 1 }, { unique: true });
+db.Students.createIndex({ stud_name: 1 });
+db.Students.createIndex({ stud_marks: -1 });
+db.Students.createIndex({ stud_addr: 1, stud_marks: -1 });
+db.Students.find({ stud_addr: "Pune" });
+db.Students.find({ stud_marks: { $gt: 80 } });
+db.Students.findOne({ stud_id: 102 });
+db.Students.find().sort({ stud_marks: -1 });
+db.Students.find({ stud_addr: "Mumbai", stud_marks: { $gt: 90 } });
+db.Students.getIndexes();
+
+================================================================================
+
+Q 16) Implement Map reduce operation with following example using MongoDB
+Students(stud_id, stud_name,stud_addr,stud_marks) 
+--------------------
+->
+
+db.createCollection("Students");
+
+db.Students.insertMany([
+  { stud_id: 101, stud_name: "Alice", stud_addr: "Pune", stud_marks: 85 },
+  { stud_id: 102, stud_name: "Bob", stud_addr: "Mumbai", stud_marks: 92 },
+  { stud_id: 103, stud_name: "Charlie", stud_addr: "Delhi", stud_marks: 78 },
+  { stud_id: 104, stud_name: "David", stud_addr: "Pune", stud_marks: 88 },
+  { stud_id: 105, stud_name: "Eva", stud_addr: "Mumbai", stud_marks: 95 },
+  { stud_id: 106, stud_name: "Fiona", stud_addr: "Delhi", stud_marks: 83 }
+]);
+var mapFunction = function() {
+  emit(this.stud_addr, { total: this.stud_marks, count: 1 });
+};
+var reduceFunction = function(key, values) {
+  var result = { total: 0, count: 0 };
+
+  values.forEach(function(value) {
+    result.total += value.total;
+    result.count += value.count;
+  });
+
+  return result;
+};
+var finalizeFunction = function(key, reducedValue) {
+  reducedValue.avg = reducedValue.total / reducedValue.count;
+  return reducedValue;
+};
+db.Students.mapReduce(
+  mapFunction,
+  reduceFunction,
+  {
+    out: "AverageMarksByCity",
+    finalize: finalizeFunction
+  }
+);
+db.AverageMarksByCity.find().pretty();
+
+================================================================================
+
+Q 17) Create  following collection and  using MongoDB  implement all CRUD operations.
+Orders( cust_id, amount, status)
+-----------------------
+->
+
+db.Orders.insertMany([
+  { cust_id: 1, amount: 500, status: "Pending" },
+  { cust_id: 2, amount: 1200, status: "Shipped" },
+  { cust_id: 3, amount: 750, status: "Delivered" }
+]);
+db.Orders.find();
+db.Orders.find({ status: "Pending" });
+db.Orders.find({ amount: { $gt: 800 } });
+db.Orders.updateOne(
+  { cust_id: 1 },
+  { $set: { status: "Shipped" } }
+);
+db.Orders.updateMany(
+  { status: "Pending" },
+  { $set: { status: "Processing" } }
+);
+db.Orders.deleteOne({ cust_id: 2 });
+db.Orders.deleteMany({ status: "Delivered" });
+db.Orders.find().pretty();
+
+================================================================================
+
+Q 23) Implement all Aggregation operations and types of indexing with following collection using MongoDB. 
+Employee(emp_id, emp_name,emp_dept,salary)
+--------------------
+->
+
+db.Employee.insertMany([
+  { emp_id: 1, emp_name: "Alice", emp_dept: "HR", salary: 50000 },
+  { emp_id: 2, emp_name: "Bob", emp_dept: "IT", salary: 60000 },
+  { emp_id: 3, emp_name: "Charlie", emp_dept: "HR", salary: 55000 },
+  { emp_id: 4, emp_name: "David", emp_dept: "Finance", salary: 70000 },
+  { emp_id: 5, emp_name: "Eve", emp_dept: "IT", salary: 65000 }
+]);
+a) $match
+Filter employees in IT department:
+
+db.Employee.aggregate([
+  { $match: { emp_dept: "IT" } }
+])
+
+b) $group
+Group by department, calculate total and average salary:
+
+db.Employee.aggregate([
+  { $group: {
+      _id: "$emp_dept",
+      totalSalary: { $sum: "$salary" },
+      avgSalary: { $avg: "$salary" },
+      minSalary: { $min: "$salary" },
+      maxSalary: { $max: "$salary" },
+      count: { $sum: 1 }
+    }
+  }
+])
+
+c) $sort
+Sort employees by salary descending:
+db.Employee.aggregate([
+  { $sort: { salary: -1 } }
+])
+
+d) $project
+Show only emp_name and salary, hide _id:
+db.Employee.aggregate([
+  { $project: { _id: 0, emp_name: 1, salary: 1 } }
+])
+
+e) $limit and $skip
+Get top 2 highest paid employees:
+db.Employee.aggregate([
+  { $sort: { salary: -1 } },
+  { $limit: 2 }
+])
+
+f) $count
+Count total number of employees:
+
+db.Employee.aggregate([
+  { $count: "total_employees" }
+])
+
+Skip first 2 employees and show the rest:
+db.Employee.aggregate([
+  { $skip: 2 }
+])
+
+
+Types of Indexing
+a) Single Field Index
+Create index on emp_dept:
+
+db.Employee.createIndex({ emp_dept: 1 })
+b) Compound Index
+Create index on emp_dept and salary:
+
+javascript
+db.Employee.createIndex({ emp_dept: 1, salary: -1 })
+c) Unique Index
+Ensure emp_id is unique:
+
+db.Employee.createIndex({ emp_id: 1 }, { unique: true })
+d) Text Index
+Enable text search on emp_name:
+
+db.Employee.createIndex({ emp_name: "text" })
+================================================================================
+
+Q 25) Design and Implement any 5 query using MongoDB
+1.	Create a collection called ‘games’.
+2.	Add 5 games to the database. Give each document the following properties: name, gametype, score (out of 100), achievements
+3.	Write a query that returns all the games
+4.	Write a query that returns the 3 highest scored games.
+5.	Write a query that returns all the games that have both the ‘Game Maser’ and
+the ‘Speed Demon’ achievements.
+-----------------------------
+->
+
+db.games.insertMany([
+  {
+    name: "Racing Rush",
+    gametype: "Racing",
+    score: 95,
+    achievements: ["Game Master", "Speed Demon", "Track King"]
+  },
+  {
+    name: "Space Quest",
+    gametype: "Adventure",
+    score: 88,
+    achievements: ["Explorer", "Alien Hunter"]
+  },
+  {
+    name: "Zombie Survival",
+    gametype: "Horror",
+    score: 92,
+    achievements: ["Survivor", "Headshot Pro"]
+  },
+  {
+    name: "Puzzle Master",
+    gametype: "Puzzle",
+    score: 85,
+    achievements: ["Game Master", "Speed Demon", "Brainiac"]
+  },
+  {
+    name: "Football Pro",
+    gametype: "Sports",
+    score: 90,
+    achievements: ["Golden Boot", "Hat-Trick Hero"]
+  }
+]);
+
+
+2)Return All Games
+db.games.find({});
+
+3)Return the 3 Highest-Scored Games
+javascript
+db.games.find().sort({ score: -1 }).limit(3);
+
+4) Return Games with Both ‘Game Master’ and ‘Speed Demon’ Achievements
+javascript
+db.games.find({
+  achievements: { $all: ["Game Master", "Speed Demon"] }
+});
+
+================================================================================
+
+31) Create database  :Citydetails(_id,name,area,population(total,Adults,seniorcitizens,sexratio), geography(avgtemp, avgrainfall, longitude, latitude))
+
+1. Find the total population in pune.
+2.  returns all city with total population greater than 10 million
+3. returns the average populations for each city.
+4.  returns the minimum and maximum cities by population for each city.
+------------------------
+->
+
+db.Citydetails.insertMany([
+  {
+    _id: 1,
+    name: "Pune",
+    area: 331.3,
+    population: { total: 7000000, Adults: 5000000, seniorcitizens: 800000, sexratio: 940 },
+    geography: { avgtemp: 24.5, avgrainfall: 722, longitude: 73.8567, latitude: 18.5204 }
+  },
+  {
+    _id: 2,
+    name: "Mumbai",
+    area: 603.4,
+    population: { total: 20400000, Adults: 15000000, seniorcitizens: 2500000, sexratio: 950 },
+    geography: { avgtemp: 27.2, avgrainfall: 2422, longitude: 72.8777, latitude: 19.0760 }
+  },
+  {
+    _id: 3,
+    name: "Delhi",
+    area: 1484,
+    population: { total: 16787941, Adults: 12000000, seniorcitizens: 2000000, sexratio: 920 },
+    geography: { avgtemp: 25.0, avgrainfall: 800, longitude: 77.1025, latitude: 28.7041 }
+  }
+]);
+1. Find the total population in Pune
+db.Citydetails.find(
+  { name: "Pune" },
+  { _id: 0, name: 1, "population.total": 1 }
+)
+
+2. Return all cities with total population greater than 10 million
+db.Citydetails.find(
+  { "population.total": { $gt: 10000000 } },
+  { _id: 0, name: 1, "population.total": 1 }
+)
+
+3. Return the average population for all cities
+db.Citydetails.aggregate([
+  {
+    $group: {
+      _id: null,
+      avgPopulation: { $avg: "$population.total" }
+    }
+  }
+])
+
+4. Return the minimum and maximum cities by population
+
+a) Get minimum and maximum population values:
+db.Citydetails.aggregate([
+  {
+    $group: {
+      _id: null,
+      minPopulation: { $min: "$population.total" },
+      maxPopulation: { $max: "$population.total" }
+    }
+  }
+])
+
+b) Get the city with minimum population:
+db.Citydetails.find().sort({ "population.total": 1 }).limit(1)
+
+c) Get the city with maximum population:
+db.Citydetails.find().sort({ "population.total": -1 }).limit(1)
+
+================================================================================
+
+32) Create database  :Citydetails(_id,name,area,population(total,Adults,seniorcitizens,sexratio), geography (avgtemp, avgrainfall, longitude, latitude))
+
+
+1.	Find area wise total population and sort them in increasing order.
+2.	Retrieve name and area where average rain fall is greater than 60
+3.	Create index on city and area find the max population in Mumbai
+4.	Create index on name.
+--------------------------
+->
+
+db.Citydetails.insertMany([
+  {
+    _id: 1,
+    name: "Pune",
+    area: 331.3,
+    population: { total: 7000000, Adults: 5000000, seniorcitizens: 800000, sexratio: 940 },
+    geography: { avgtemp: 24.5, avgrainfall: 722, longitude: 73.8567, latitude: 18.5204 }
+  },
+  {
+    _id: 2,
+    name: "Mumbai",
+    area: 603.4,
+    population: { total: 20400000, Adults: 15000000, seniorcitizens: 2500000, sexratio: 950 },
+    geography: { avgtemp: 27.2, avgrainfall: 2422, longitude: 72.8777, latitude: 19.0760 }
+  },
+  {
+    _id: 3,
+    name: "Delhi",
+    area: 1484,
+    population: { total: 16787941, Adults: 12000000, seniorcitizens: 2000000, sexratio: 920 },
+    geography: { avgtemp: 25.0, avgrainfall: 800, longitude: 77.1025, latitude: 28.7041 }
+  }
+]);
+db.Citydetails.aggregate([
+  {
+    $group: {
+      _id: "$area",
+      totalPopulation: { $sum: "$population.total" }
+    }
+  },
+  { $sort: { totalPopulation: 1 } }
+])
+db.Citydetails.find(
+  { "geography.avgrainfall": { $gt: 60 } },
+  { _id: 0, name: 1, area: 1 }
+)
+db.Citydetails.createIndex({ name: 1, area: 1 })
+db.Citydetails.find(
+  { name: "Mumbai" }
+).sort({ "population.total": -1 }).limit(1)
+db.Citydetails.createIndex({ name: 1 })
